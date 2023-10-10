@@ -64,10 +64,11 @@ class UserStatus:
                                  random_id=get_random_id(),
                                  message=f'г. {self.city}. ' + message2)
                 self.state += 1
-            except:
+            except Exception:
                 vk.messages.send(user_id=self.user_id,
                                  random_id=get_random_id(),
                                  message='Кажется, у тебя в профиле не указан город.')
+                self.state = 0
                 return
         elif message == 'Указать город':
             vk.messages.send(user_id=self.user_id,
@@ -81,11 +82,17 @@ class UserStatus:
         self.state += 1
 
     def city_input(self, message):
-        self.city = message
-        vk.messages.send(user_id=self.user_id,
-                         random_id=get_random_id(),
-                         message=f'г. {self.city}. ' + message2)
-        self.state += 1
+        try:
+            self.city = message
+            vk.messages.send(user_id=self.user_id,
+                             random_id=get_random_id(),
+                             message=f'г. {self.city}. ' + message2)
+            self.state += 1
+        except ValueError:
+            vk.messages.send(user_id=self.user_id,
+                             random_id=get_random_id(),
+                             message=f'Ошибка, город не найден.')
+            self.state = 1
 
     def range_choice(self, message):
         if message.isdigit() and 1 <= int(message) <= 10:
@@ -109,20 +116,33 @@ class UserStatus:
                              random_id=get_random_id(),
                              message=f'Введите время в формате hh:mm')
             self.state += 1
-        else:
+        elif message == 'Нет':
             self._send_forecast()
+        else:
+            vk.messages.send(user_id=self.user_id,
+                             random_id=get_random_id(),
+                             message=f'Выберите "Да" или "Нет".')
+            self.state = 3
+            self.next(str(self.range))
 
     def notification_add(self, message):
         message_list = message.strip(' ').split(':')
-        if len(message_list) == 2 and len(message_list[0]) == len(message_list[1]) == 2 and self._check_time(message_list):
+        if len(message_list) == 2 and len(message_list[0]) == len(message_list[1]) == 2 and self._check_time(
+                message_list):
             user_notify_time[self.user_id] = message
             schedule.every().day.at(message).do(self._send_forecast)
             self.notif_time = message
-        vk.messages.send(user_id=self.user_id,
-                         random_id=get_random_id(),
-                         message=f'Уведомления настроены!')  # add city to notif
-        self.state += 1
-        self._send_forecast()
+            vk.messages.send(user_id=self.user_id,
+                             random_id=get_random_id(),
+                             message=f'Уведомления настроены!')  # add city to notif
+            self.state += 1
+            self._send_forecast()
+        else:
+            vk.messages.send(user_id=self.user_id,
+                             random_id=get_random_id(),
+                             message=f'Неверный формат ввода времени.')
+            self.state = 3
+            self.next(str(self.range))
 
     @staticmethod
     def _check_time(message: list):
