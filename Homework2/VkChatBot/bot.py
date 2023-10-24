@@ -95,6 +95,8 @@ class UserStatus:
             self.state = 1
 
     def range_choice(self, message):
+        if message == 'Сегодня':
+            message = '1'
         if message.isdigit() and 1 <= int(message) <= 10:
             self.range = int(message)
             self.state += 1
