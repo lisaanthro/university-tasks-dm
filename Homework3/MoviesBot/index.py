@@ -49,7 +49,7 @@ def greetings(message):
 def movie_of_the_day(message):
     movies_json = get_movies('movie_of_the_day.json')
     print(movies_json)
-    movie_id = randint(0, len(movies_json))
+    movie_id = randint(0, len(movies_json) - 1)
     movie = movies_json.get(str(movie_id), 'Фильм дня недоступен')
     bot.send_message(message.chat.id, movie)
 
@@ -96,8 +96,8 @@ def drama(message):
 def movie_of_the_day(message):
     movies_json = get_movies('movie_of_the_day.json')
     print(movies_json)
-    movie_id = randint(0, len(movies_json))
-    movie = movies_json.get(str(movie_id), 'Фильм дня недоступен')
+    movie_id = randint(0, len(movies_json) - 1)
+    movie = movies_json.get(str(movie_id), 'Случайный фильм недоступен')
     bot.send_message(message.chat.id, movie)
 
 
