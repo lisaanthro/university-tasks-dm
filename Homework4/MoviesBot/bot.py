@@ -2,7 +2,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram import F
 from aiogram.filters import StateFilter
 from aiogram.filters.command import Command
-from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage, Redis
 from aiogram.fsm.state import default_state, State, StatesGroup
 from aiogram.fsm.context import FSMContext
 import asyncio
@@ -10,12 +10,17 @@ import datetime
 import json
 from random import randint
 
+#TODO: создать статистику по последнему фильму, который пользователь видел
+
 from config_reader import config
 from messages import genres
 
 bot = Bot(token=config.bot_token.get_secret_value())
-dp = Dispatcher()
-storage = MemoryStorage()
+redis = Redis(host='localhost')
+storage = RedisStorage(redis=redis)
+dp = Dispatcher(storage=storage)
+
+user_dict: dict[int, dict[str, str | int | bool]] = {}
 
 
 class FSMMovieByGenre(StatesGroup):
@@ -63,8 +68,6 @@ async def get_movie_of_the_day(message: types.Message, state: FSMContext):
 async def get_random_movie(message: types.Message, state: FSMContext):
     movies_json = get_movies('random_movie.json')
     movie_id = randint(0, len(movies_json) - 1)
-    print(movie_id)
-    print(movies_json)
     movie = movies_json.get(str(movie_id), 'Случайный фильм недоступен')
     await message.answer(movie)
     await state.clear()
@@ -95,7 +98,11 @@ async def warning_not_genre(message: types.Message):
 
 @dp.message(StateFilter(default_state))
 async def send_echo(message: types.Message):
-    await message.answer('Извините, такой команды нет.\nДля возвращения в начало нажмите /start\nДля отмены нажмите /cancel')
+    await message.answer(
+        text='Извините, такой команды нет.\n\n'
+             'Для возвращения в начало нажмите /start\n'
+             'Для отмены нажмите /cancel'
+    )
 
 
 async def main():
